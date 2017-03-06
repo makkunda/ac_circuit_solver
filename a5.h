@@ -221,7 +221,7 @@ matrix *inverse(matrix *b)
         }
     }
 
-    matrix *inverse=creatematrix(n,n);
+    matrix *inverse=construct_matrix(n,n);
 
     for(i=0;i<n;i++)
     	for(j=n;j<2*n;j++)
