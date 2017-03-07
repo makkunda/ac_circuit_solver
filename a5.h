@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #define write_file stdout
 typedef struct
 	{
@@ -66,6 +67,15 @@ complex* construct(double a,double b)
 	comp->c = b;
 	return comp;
 }
+
+complex *getcopy(complex *a)
+{
+	complex *b=retzero();
+	b->r=a->r;
+	b->c=a->c;
+	return b;
+}
+
 matrix* construct_matrix(int row,int col)
 {
 	matrix* comp = (matrix*) calloc(1,sizeof(matrix));
@@ -74,15 +84,18 @@ matrix* construct_matrix(int row,int col)
 
 	comp->start=(complex ***)malloc(sizeof(complex **) * row);
 int i;
+//printf("reached\n" );
   for(i=0;i<row;i++)
   	{
+  		//printf("reached1\n" );
   		comp->start[i]=(complex **)malloc(sizeof(complex *)*col);
 
   		int j;
 
   		for(j=0;j<col;j++)
-  			comp->start[i][j]=retzero();
+  			{comp->start[i][j]=retzero();}
   	}
+  	return comp;
 }
 
 matrix *construct_matrix2(int row,int col,matrix *a)
@@ -98,6 +111,7 @@ matrix *construct_matrix2(int row,int col,matrix *a)
 			comp->start[i][j]=getcopy(a->start[i][j]);
 		}
 	}
+	return comp;
 }
 complex* add(complex* a,complex* b)
 {
@@ -178,13 +192,7 @@ matrix* multmatrix(matrix* a,matrix* b)  //AB
  	return ans;
  }
 
-complex* getcopy(complex *a)
-{
-	complex *b=retzero();
-	b->r=a->r;
-	b->c=a->c;
-	return b;
-}
+
 
 matrix *inverse(matrix *b)
 {
@@ -195,17 +203,15 @@ matrix *inverse(matrix *b)
     	double d; 
     	complex *aa;
 
-    for (i = 1; i <= n; i++)
-        for (j = 1; j <= 2 * n; j++)
-            if (j == (i + n))
-                a->start[i][j]= construct(1,0);
+    for (i = 0; i < n; i++)
+                a->start[i][i+n]= construct(1,0);
 
  
 
       for(i = 0; i < n; i++){
         for(j = 0; j < n; j++){
             if(i!=j){
-                ratio = divide(a->start[j][i],a->start[i][i]);
+                complex *ratio = divide(a->start[j][i],a->start[i][i]);
                 for(k = 0; k < 2*n; k++){
                     a->start[j][k] = sub(a->start[j][k],mult(ratio,a->start[i][k]));
                 }
@@ -228,6 +234,7 @@ matrix *inverse(matrix *b)
     		inverse->start[i][j-n]=a->start[i][j];
     	return inverse;
 }
+
 
 
 typedef struct
