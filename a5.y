@@ -142,6 +142,8 @@ fflush(stdout);
 
 
     fprintf(write_file, "</svg>");
+    FILE* res;
+    res = fopen("results.txt","r");
     fflush(stdout);
     double pi = 4*atan(1);
     complex* inf = retzero();
@@ -150,63 +152,79 @@ fflush(stdout);
     complex* one = construct(1,0);
     complex** final;
     complex** temp;
-    final=(complex **)malloc(sizeof(complex*)*netcount);
-    temp=(complex **)malloc(sizeof(complex*)*netcount);
-    for(i=0;i<netcount;i++)
-    {
-        final[i] = retzero();
-    }
+    final=(complex **)malloc(sizeof(complex*)*(netcount-1));
     for(i=0;i<activecount;i++)
     {
+        temp=(complex **)malloc(sizeof(complex*)*(netcount));
+        for(j=0;j<(netcount);j++)
+        {
+            temp[j] = retzero();
+        }
         double w = 2*pi*(act[i].freq);
+        fprintf(res,"FREQUENCY %lf \n",w);
         matrix* A;
-        A = construct_matrix(netcount+voltcount,netcount+voltcount);
+        A = construct_matrix(netcount+voltcount-1,netcount+voltcount-1);
         for(j=0;j<passivecount;j++)
         {
-            int n1 = pass[j].net1;
-            int n2 = pass[j].net2;
+            int n1 = pass[j].net1-1;
+            int n2 = pass[j].net2-1;
             complex* vall = retzero();
-            if(pass[i].type==0)
+            if(pass[j].type==0)
             {
-                vall->r = -1/(pass[i].val);
+                vall->r = -1/(pass[j].val);
             }
-            else if(pass[i].type==1)
+            else if(pass[j].type==1)
             {
-                vall->c = 1/(w*pass[i].val);
+                vall->c = 1/(w*pass[j].val);
             }
             else{
-                vall->c = -1*w*pass[i].val;
+                vall->c = -1*w*pass[j].val;
             }
+            if(n1!=(-1) && n2!=(-1)){
             A->start[n1][n2] = add(vall,A->start[n1][n2]);
             A->start[n1][n1] = add(A->start[n1][n1],mult(negone,vall));
             A->start[n2][n2] = add(A->start[n2][n2],mult(negone,vall));
+            A->start[n2][n1] = add(vall,A->start[n2][n1]);
+            }
+            else if(n1!=-1)
+            {
+                A->start[n1][n1] = add(A->start[n1][n1],mult(negone,vall));
+            }
+            else
+            {
+                A->start[n2][n2] = add(A->start[n2][n2],mult(negone,vall));
+            }
         }
         for(j=0;j<activecount;j++)
         {
             if(act[j].type==0 && j==i)
             {
-                int n1 = act[j].net1;
-                int n2 = act[j].net2;
+                int n1 = act[j].net1-1;
+                int n2 = act[j].net2-1;
                 int kk = act[j].active_count-1;
+                if(n1!=-1){
                 A[n1][netcount+kk] = construct(1,0);
+                    A[netcount+kk][n1] = construct(1,0);}
+                if(n2!=-1){
                 A[n2][netcount+kk] = construct(-1,0);
-                A[netcount+kk][n1] = construct(1,0);
-                A[netcount+kk][n2] = construct(-1,0);
+                    A[netcount+kk][n2] = construct(-1,0);}
             }
             
         }
-        matrix* Ainv = cofactor(A,netcount);
+        matrix* Ainv = inverse(A);
         complex** B;
-        B=(complex **)malloc(sizeof(complex *)*(netcount+voltcount));
+        B=(complex **)malloc(sizeof(complex *)*(netcount+voltcount-1));
         for(j=0;j<activecount;j++)
         {
             if(j==i)
             {
-                int n1 = act[j].net1;
-                int n2 = act[j].net2;
+                int n1 = act[j].net1-1;
+                int n2 = act[j].net2-1;
                 if(act[j].type==1)
                 {
+                    if(n1!=-1)
                     B[n1] = sub(B[n1],act[j].val);
+                    if(n2!=-1)
                     B[n2] = add(B[n2],act[j].val);
                 }
                 else
@@ -220,30 +238,59 @@ fflush(stdout);
         // fill B properly not sure how
         int k;
         // temp = Ainv*B
-        for(j=0;j<netcount;j++)
+        for(j=1;j<=(netcount+voltcount-1);j++)
         {
-            for(k=0;k<netcount;k++)
+            for(k=0;k<(netcount+voltcount-1);k++)
             {
-                temp[j] = add(temp[j],mult(Ainv->start[j][k],B[k]));
+                temp[j] = add(temp[j],mult(Ainv->start[j-1][k],B[k]));
             }
-            final[j] = add(final[j],temp[j]);
+        }
+        fprintf(res,"VOLTAGES\n");
+        for(j=0;j<passivecount;j++)
+        {
+            complex* valll = sub(temp[pass[j].net1],temp[pass[j].net2]);
+            fprintf(res,"%s %lf %lf \n",pass[j].name,ab(valll),angle(valll));
+        }
+        for(j=0;j<activecount;j++)
+        {
+            complex* valll = sub(temp[act[j].net1],temp[act[j].net2]);
+            fprintf(res,"%s %lf %lf \n",act[j].name,ab(valll),angle(valll));
+        }
+        fprintf(res,"\nCURRENTS\n");
+        for(j=0;j<passivecount;j++)
+        {
+            complex* valll = sub(temp[pass[j].net1],temp[pass[j].net2]);
+            complex* vallll = retzero();
+            if(pass[j].type==0)
+            {
+                vallll->r = 1/(pass[j].val);
+            }
+            else if(pass[j].type==1)
+            {
+                vallll->c = -1/(w*pass[j].val);
+            }
+            else{
+                vallll->c = 1*w*pass[j].val;
+            }
+            valll = mult(valll,vallll);
+            fprintf(res,"%s %lf %lf \n",pass[j].name,ab(valll),angle(valll));
+        }
+        for(j=0;j<activecount;j++)
+        {
+            if(act[j].type==1)
+            {
+                complex* valll = act[j].val;
+                fprintf(res,"%s %lf %lf \n",act[i].name,ab(valll),angle(valll));
+            }
+            else
+            {
+                int kkk = act[j].active_count - 1;
+                complex* valll = B[netcount+kkk];
+                fprintf(res,"%s %lf %lf \n",act[i].name,ab(valll),angle(valll));
+            }
         }
     }
-    FILE* res;
-    res = fopen("results.txt","r");
-    fprintf(res,"VOLTAGES\n");
-    for(i=0;i<passivecount;i++)
-    {
-        complex* valll = sub(final[pass[i].net1],final[pass[i].net2]);
-        fprintf(res,"%s %lf %lf \n",pass[i].name,ab(valll),angle(valll));
-    }
-    for(i=0;i<activecount;i++)
-    {
-        complex* valll = sub(final[act[i].net1],final[act[i].net2]);
-        fprintf(res,"%s %lf %lf \n",act[i].name,ab(valll),angle(valll));
-    }
     
-    fprintf(res,"\nCURRENTS\n");
 }
 
 yyerror(char *s)
