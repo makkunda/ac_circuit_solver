@@ -16,18 +16,18 @@
  		BEGIN n1;
 		return NAME;
 	}		
-<INITIAL>([1-9]([0-9])*(F|P|N|U|M|K|"MEG")?"H") {
+<INITIAL>([0-9]+(\.[0-9]+)?(F|P|N|U|M|K|"MEG")?"H") {
 		yylval.stri = strdup(yytext);
 	//	fprintf(write_file1,"%s \n",yylval.stri);
 		return IND;
 	}
 
-<INITIAL>([1-9]([0-9])*(F|P|N|U|M|K|"MEG")?"F") {
+<INITIAL>([0-9]+(\.[0-9]+)?(F|P|N|U|M|K|"MEG")?"F") {
 	yylval.stri = strdup(yytext);
 //	fprintf(write_file1,"%s \n",yylval.stri);
 	return CAP;
 	}
-<INITIAL>([1-9]([0-9])*(P|N|U|M|K|"MEG")?) {
+<INITIAL>([0-9]+(\.[0-9]+)?(P|N|U|M|K|"MEG")?) {
 	yylval.stri = strdup(yytext);
 	//fprintf(write_file1,"%s \n",yylval.stri);
 	return RES;
