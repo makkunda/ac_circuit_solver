@@ -8,7 +8,8 @@
 	int SynErr;
 	int passivecount;
 	int activecount ;
-	int netcount; 
+	int netcount;
+    int voltcount;
 	passive pass[10000];
 	int netposition[10000];
         active  act[10000];
@@ -41,10 +42,10 @@ inductor: NAME NET NET IND {create_passive($1,$2,$3,$4,1);}
 capacitor: NAME NET NET CAP {create_passive($1,$2,$3,$4,2);}
 	| NAME NET NET CAP EOL {create_passive($1,$2,$3,$4,2);} ;
 
-voltage: VOLT NET NET SINE NUMBER NUMBER FREQ DELAY NUMBER CP {create_active($1,$2,$3,$5,$6,$7,$8,$9,0);} 
-	|VOLT NET NET SINE NUMBER NUMBER FREQ DELAY NUMBER CP EOL {create_active($1,$2,$3,$5,$6,$7,$8,$9,0);}
-	|VOLT NET NET SINE NUMBER NUMBER FREQ DELAY CP {create_active($1,$2,$3,$5,$6,$7,$8,"0",0);fprintf(write_file1,"damping constant missing \n");}
-	|VOLT NET NET SINE NUMBER NUMBER FREQ DELAY CP EOL {create_active($1,$2,$3,$5,$6,$7,$8,"0",0);fprintf(write_file1,"damping constant missing \n");} ;
+voltage: VOLT NET NET SINE NUMBER NUMBER FREQ DELAY NUMBER CP {create_active($1,$2,$3,$5,$6,$7,$8,$9,0);voltcount++;}
+	|VOLT NET NET SINE NUMBER NUMBER FREQ DELAY NUMBER CP EOL {create_active($1,$2,$3,$5,$6,$7,$8,$9,0);voltcount++;}
+	|VOLT NET NET SINE NUMBER NUMBER FREQ DELAY CP {create_active($1,$2,$3,$5,$6,$7,$8,"0",0);fprintf(write_file1,"damping constant missing \n");voltcount++;}
+	|VOLT NET NET SINE NUMBER NUMBER FREQ DELAY CP EOL {create_active($1,$2,$3,$5,$6,$7,$8,"0",0);fprintf(write_file1,"damping constant missing \n");voltcount++;} ;
 
 current:CURRENT NET NET SINE NUMBER NUMBER FREQ DELAY NUMBER CP {create_active($1,$2,$3,$5,$6,$7,$8,$9,1);} 
 	|CURRENT NET NET SINE NUMBER NUMBER FREQ DELAY NUMBER CP EOL {create_active($1,$2,$3,$5,$6,$7,$8,$9,1);}
@@ -56,7 +57,7 @@ current:CURRENT NET NET SINE NUMBER NUMBER FREQ DELAY NUMBER CP {create_active($
 
 main(int argc, char* argv[])
 {
-
+    voltcount = 0;
 freopen(argv[1],"r",stdin);
 freopen(argv[2],"a",stdout);
     write_file1=fopen("error.txt","w");
@@ -159,7 +160,7 @@ fflush(stdout);
     {
         double w = 2*pi*(act[i].freq);
         matrix* A;
-        A = construct_matrix(netcount,netcount);
+        A = construct_matrix(netcount+voltcount,netcount+voltcount);
         for(j=0;j<passivecount;j++)
         {
             int n1 = pass[j].net1;
@@ -182,23 +183,40 @@ fflush(stdout);
         }
         for(j=0;j<activecount;j++)
         {
-            if(j!=i)
+            if(act[j].type==0 && j==i)
             {
-                if(act[i].type==0)
+                int n1 = act[j].net1;
+                int n2 = act[j].net2;
+                int kk = act[j].active_count-1;
+                A[n1][netcount+kk] = construct(1,0);
+                A[n2][netcount+kk] = construct(-1,0);
+                A[netcount+kk][n1] = construct(1,0);
+                A[netcount+kk][n2] = construct(-1,0);
+            }
+            
+        }
+        matrix* Ainv = cofactor(A,netcount);
+        complex** B;
+        B=(complex **)malloc(sizeof(complex *)*(netcount+voltcount));
+        for(j=0;j<activecount;j++)
+        {
+            if(j==i)
+            {
+                int n1 = act[j].net1;
+                int n2 = act[j].net2;
+                if(act[j].type==1)
                 {
-                    int n1 = act[i].net1;
-                    int n2 = act[i].net2;
-                    A->start[n1][n2] = add(mult(negone,inf),A->start[n1][n2]);
-                    A->start[n1][n1] = add(A->start[n1][n1],inf);
-                    A->start[n2][n2] = add(A->start[n2][n2],inf);
+                    B[n1] = sub(B[n1],act[j].val);
+                    B[n2] = add(B[n2],act[j].val);
+                }
+                else
+                {
+                    int kk = act[j].active_count - 1;
+                    B[netcount+kk] = act[j].val;
                 }
             }
+            
         }
-        matrix* Ainv = inverse(A);
-        complex** B;
-        B=(complex **)malloc(sizeof(complex *)*netcount);
-        for(j=0;j<netcount;j++)
-        { B[j] = retzero();temp[j] = retzero();}
         // fill B properly not sure how
         int k;
         // temp = Ainv*B
