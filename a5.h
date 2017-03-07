@@ -235,6 +235,60 @@ matrix *inverse(matrix *b)
     	return inverse;
 }
 
+double extract_value(char *s)
+{
+	int x=strlen(s);
+	char *temp=malloc(sizeof (char)*x);
+
+	int i;
+
+	for(i=0;i<x;i++)
+	{
+		if(s[i]!='.' && (s[i]>57 || s[i]<48))
+			break;
+		temp[i]=s[i];
+	}
+	temp[i]='\0';
+	double val;
+	sscanf(temp,"%lf",&val);
+
+	for(;i<x;i++)
+	{
+		if(s[i]=='F')
+		{
+			if(i!=x-1)
+				val/=(1e15);
+		}
+		else if(s[i]=='P')
+		{
+			val/=1e12;
+		}
+		else if(s[i]=='N')
+		{
+			val/=1e9;
+		}
+		else if(s[i]=='U')
+		{
+			val/=1e6;
+		}else if(s[i]=='M')
+		{
+			if(s[i+1]=='E')
+				val*=1e6;
+			else
+			val/=1e3;
+		}
+		else if(s[i]=='K')
+		{
+			val*=1e3;
+		}
+		break;
+	}
+	//printf("%.15lf",1/(1e15));
+
+
+	return val;
+}
+
 
 
 typedef struct
