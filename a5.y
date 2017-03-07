@@ -143,8 +143,7 @@ fflush(stdout);
 
     fprintf(write_file, "</svg>");
     FILE* res;
-    res = fopen("results.txt","r");
-    fflush(stdout);
+    res = fopen("results.txt","w");
     double pi = 4*atan(1);
     complex* inf = retzero();
     inf->r = pow(10,10);
@@ -152,16 +151,16 @@ fflush(stdout);
     complex* one = construct(1,0);
     complex** final;
     complex** temp;
-    final=(complex **)malloc(sizeof(complex*)*(netcount-1));
     for(i=0;i<activecount;i++)
     {
-        temp=(complex **)malloc(sizeof(complex*)*(netcount));
-        for(j=0;j<(netcount);j++)
+        temp=(complex **)malloc(sizeof(complex*)*(netcount+voltcount));
+        for(j=0;j<(netcount+voltcount);j++)
         {
             temp[j] = retzero();
         }
         double w = 2*pi*(act[i].freq);
-        fprintf(res,"FREQUENCY %lf \n",w);
+        fprintf(res,"FREQUENCY %lfKHz \n",act[i].freq/1000);
+        
         matrix* A;
         A = construct_matrix(netcount+voltcount-1,netcount+voltcount-1);
         for(j=0;j<passivecount;j++)
@@ -203,17 +202,19 @@ fflush(stdout);
                 int n2 = act[j].net2-1;
                 int kk = act[j].active_count-1;
                 if(n1!=-1){
-                A[n1][netcount+kk] = construct(1,0);
-                    A[netcount+kk][n1] = construct(1,0);}
+                A->start[n1][netcount+kk] = construct(1,0);
+                    A->start[netcount+kk][n1] = construct(1,0);}
                 if(n2!=-1){
-                A[n2][netcount+kk] = construct(-1,0);
-                    A[netcount+kk][n2] = construct(-1,0);}
+                A->start[n2][netcount+kk] = construct(-1,0);
+                    A->start[netcount+kk][n2] = construct(-1,0);}
             }
             
         }
         matrix* Ainv = inverse(A);
         complex** B;
         B=(complex **)malloc(sizeof(complex *)*(netcount+voltcount-1));
+        for(j=0;j<(netcount+voltcount-1);j++)
+            B[j] = retzero();
         for(j=0;j<activecount;j++)
         {
             if(j==i)
@@ -235,7 +236,6 @@ fflush(stdout);
             }
             
         }
-        // fill B properly not sure how
         int k;
         // temp = Ainv*B
         for(j=1;j<=(netcount+voltcount-1);j++)
@@ -250,12 +250,15 @@ fflush(stdout);
         {
             complex* valll = sub(temp[pass[j].net1],temp[pass[j].net2]);
             fprintf(res,"%s %lf %lf \n",pass[j].name,ab(valll),angle(valll));
+            fflush(res);
         }
+        fflush(res);
         for(j=0;j<activecount;j++)
         {
             complex* valll = sub(temp[act[j].net1],temp[act[j].net2]);
             fprintf(res,"%s %lf %lf \n",act[j].name,ab(valll),angle(valll));
         }
+        fflush(res);
         fprintf(res,"\nCURRENTS\n");
         for(j=0;j<passivecount;j++)
         {
@@ -280,15 +283,16 @@ fflush(stdout);
             if(act[j].type==1)
             {
                 complex* valll = act[j].val;
-                fprintf(res,"%s %lf %lf \n",act[i].name,ab(valll),angle(valll));
+                fprintf(res,"%s %lf %lf \n",act[j].name,ab(valll),angle(valll));
             }
             else
             {
                 int kkk = act[j].active_count - 1;
-                complex* valll = B[netcount+kkk];
-                fprintf(res,"%s %lf %lf \n",act[i].name,ab(valll),angle(valll));
+                complex* valll = temp[netcount+kkk+1];
+                fprintf(res,"%s %lf %lf \n",act[j].name,ab(valll),angle(valll));
             }
         }
+        fprintf(res,"\n");
     }
     
 }
