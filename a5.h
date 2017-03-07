@@ -244,7 +244,7 @@ double extract_value(char *s)
 
 	for(i=0;i<x;i++)
 	{
-		if(s[i]!='.' && (s[i]>57 || s[i]<48))
+		if(s[i]!='.' && s[i]!='-' &&  (s[i]>57 || s[i]<48))
 			break;
 		temp[i]=s[i];
 	}
