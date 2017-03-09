@@ -36,6 +36,12 @@ double angle(complex* a)
   double ans = atan(comp/real);
   double pi = 4*atan(1);
   ans = ans*180/pi;
+  if(real==0 && comp==0)
+      ans = 0;
+  if(real<0 && comp<0)
+      ans = ans - 180;
+  if(real<0 && comp>0)
+      ans = ans + 180;
   return ans;
  }
 complex* retzero()            //returns a complex number 0
@@ -45,7 +51,7 @@ complex* retzero()            //returns a complex number 0
     comp->c = 0;
     return comp;
 }
-complex* retone()            //returns a complex number 0
+complex* retone()            //returns a complex number 1
 {
     complex* comp = (complex*)malloc(sizeof(complex));
     comp->r = 1;
@@ -53,7 +59,7 @@ complex* retone()            //returns a complex number 0
     return comp;
 }
 
-complex* retnegone()            //returns a complex number 0
+complex* retnegone()            //returns a complex number -1
 {
     complex* comp = (complex*)malloc(sizeof(complex));
     comp->r = -1;
@@ -336,6 +342,17 @@ typedef struct
         double freq;
         int active_count;
     } active;
+typedef struct
+    {
+        char* name;
+        int net1;
+        int net2;
+        int mtype;
+        int ltype;
+        double val1;
+        complex* val2;
+        int active_count1;
+    }printres;
 void dfs_cycle_detect(int i);
 void print_svg();
 //void draw_inductor(int sx,int sy,int rotate,char *s);
@@ -348,6 +365,7 @@ void create_passive(char* name,char* n1,char* n2,char* val,int type);
 void create_active(char* name,char* n1,char* n2,char* off,char* amp,char* freq,char* del,char* damp,int type);
 void throw_err();
 extern passive pass[10000];
+extern printres pr[20000];
 extern active  act[10000];
 extern int passivecount;
 extern int activecount ;
@@ -357,7 +375,7 @@ extern int exzero ;
 extern int netcount;
 extern int coun_net[10000];
 extern int voltcount;
-
+extern int totalcount;
 int comparator(const void *p, const void *q) 
 {
     double l = ((active *)p)->freq;
@@ -384,7 +402,11 @@ int search(char* x,int np)
 }
 void create_passive(char* name,char* n1,char* n2,char* val,int type){
     passive* new1 = (passive*) calloc(1,sizeof(passive)*100);
+    printres* npr = (printres*) malloc(sizeof(printres));
     new1->name = name;
+    npr->name = name;
+    npr->mtype = 0;
+    npr->ltype = type;
     int number = 0;int i;
     new1->n1 = n1;new1->n2 = n2;
     if(strcmp(n1,"0")==0)
@@ -451,14 +473,25 @@ void create_passive(char* name,char* n1,char* n2,char* val,int type){
     strcat(new1->total," ");
     strcat(new1->total,val);
     new1->val = extract_value(val);
+    npr->net1 = new1->net1;
+    npr->net2 = new1->net2;
+    npr->active_count1 = voltcount;
+    npr->val1 = new1->val;
+    npr->val2 = retzero();
+    pr[totalcount] = *npr;
     pass[passivecount] = *new1;
     passivecount++;
+    totalcount++;
     //printf("%s \n",new1->total);
 //fprintf(write_file1,"%s %d %d %s %s\n",new1->total,new1->net1,new1->net2,new1->n1,new1->n2);
 } 
 void create_active(char* name,char* n1,char* n2,char* off,char* amp,char* freq,char* del,char* damp,int type){
     active* new1 = (active*) calloc(1,sizeof(active)*100);
+    printres* npr = (printres*) malloc(sizeof(printres));
         new1->name = name;
+    npr->name = name;
+    npr->mtype = 1;
+    npr->ltype = type;
     int number = 0;int i;
     new1->n1 = n1;new1->n2 = n2;
     if(strcmp(n1,"0")==0)
@@ -547,8 +580,15 @@ void create_active(char* name,char* n1,char* n2,char* off,char* amp,char* freq,c
     new1->active_count = voltcount;
     new1->freq = extract_value(freq);
     new1->val = n11;
+    npr->net1 = new1->net1;
+    npr->net2 = new1->net2;
+    npr->active_count1 = voltcount;
+    npr->val1 = 0;
+    npr->val2 = new1->val;
+    pr[totalcount] = *npr;
     act[activecount] = *new1;
-    activecount++;  
+    activecount++;
+    totalcount++;
     //printf("%s \n",new1->total);
     //fprintf(write_file1,"%s %d %d %s %s\n",new1->total,new1->net1,new1->net2,new1->n1,new1->n2);
 }
