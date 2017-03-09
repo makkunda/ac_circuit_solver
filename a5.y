@@ -232,11 +232,11 @@ fflush(stdout);
                 int n2 = act[j].net2-1;
                 int kk = act[j].active_count-1;
                 if(n1!=-1){
-                    A->start[n1][netcount+kk] = construct(-1,0);
-                    A->start[netcount+kk][n1] = construct(-1,0);}
+                    A->start[n1][netcount+kk] = construct(1,0);
+                    A->start[netcount+kk][n1] = construct(1,0);}
                 if(n2!=-1){
-                    A->start[n2][netcount+kk] = construct(1,0);
-                    A->start[netcount+kk][n2] = construct(1,0);}
+                    A->start[n2][netcount+kk] = construct(-1,0);
+                    A->start[netcount+kk][n2] = construct(-1,0);}
 
             }   
         }
@@ -266,8 +266,9 @@ fflush(stdout);
             B[j] = retzero();
         for(j=0;j<activecount;j++)
         {
-            if(j==i)
+            if(act[j].freq==act[i].freq)
             {
+                i=j;
                 int n1 = act[j].net1-1;
                 int n2 = act[j].net2-1;
                 if(act[j].type==1)
