@@ -149,6 +149,38 @@ main(int argc, char* argv[])
     
     
     fprintf(write_file, "</svg>");
+/*    long long int ttt = activecount;
+    for(i=0;i<ttt;i++)
+    {
+        active* new1 = (active*)calloc(1,sizeof(active));
+        new1->net1 = act[i].net1;
+        new1->net2 = act[i].net2;
+        new1->name = act[i].name;
+        new1->amplitude = act[i].offset;
+        new1->delay = act[i].delay;
+        new1->damping = act[i].damping;
+        char* ss;
+        char* ss1;
+        ss = (char*)malloc(sizeof(char)*10);
+        ss1 = (char*)malloc(sizeof(char)*10);
+        strcpy(ss,"0");
+        strcpy(ss1,"0");
+        new1->offset = ss;
+        new1->n1 = act[i].n1;
+        new1->n2 = act[i].n2;
+        new1->total = act[i].total;
+        new1->type = act[i].type;
+        new1->frequency = ss1;
+        complex* v1 = retzero();
+        v1->r = extract_value(act[i].offset);
+        new1->val = v1;
+        new1->freq = 1;
+        new1->active_count = voltcount;
+        voltcount++;
+        act[activecount] = *new1;
+        activecount++;
+        
+    } */
     FILE* res;
     res = fopen("results.txt","w");
     double pi = 4*atan(1);
@@ -243,26 +275,26 @@ main(int argc, char* argv[])
                 
             }
         }
-        // int ii,jj;
-        // for(ii=0;ii<A->row;ii++)
-        // {
-        //     for(jj=0;jj<A->col;jj++)
-        //     {
-        //         fprintf(write_file1,"%.6lf,%.6lf ",A->start[ii][jj]->r,A->start[ii][jj]->c);
-        //     }
-        //     fprintf(write_file1,"\n");
-        // }
-        
+         int ii,jj;
+     /*    for(ii=0;ii<A->row;ii++)
+         {
+             for(jj=0;jj<A->col;jj++)
+             {
+                 fprintf(write_file1,"%.6lf,%.6lf ",A->start[ii][jj]->r,A->start[ii][jj]->c);
+             }
+             fprintf(write_file1,"\n");
+         }
+    */
         matrix* Ainv = inverse(A);
-        // for(ii=0;ii<Ainv->row;ii++)
-        // {
-        //     for(jj=0;jj<Ainv->col;jj++)
-        //     {
-        //         fprintf(write_file1,"%.6lf,%.6lf ",Ainv->start[ii][jj]->r,Ainv->start[ii][jj]->c);
-        //     }
-        //     fprintf(write_file1,"\n");
-        // }
-        
+     /*    for(ii=0;ii<Ainv->row;ii++)
+         {
+             for(jj=0;jj<Ainv->col;jj++)
+             {
+                 fprintf(write_file1,"%.6lf,%.6lf ",Ainv->start[ii][jj]->r,Ainv->start[ii][jj]->c);
+             }
+             fprintf(write_file1,"\n");
+         }
+      */
         complex** B;
         B=(complex **)malloc(sizeof(complex *)*(netcount+voltcount-1));
         for(j=0;j<(netcount+voltcount-1);j++)
@@ -272,8 +304,8 @@ main(int argc, char* argv[])
             if(act[j].freq==act[i].freq)
             {
                 i=j;
-                int n2 = act[j].net1-1;
-                int n1 = act[j].net2-1;
+                int n1 = act[j].net1-1;
+                int n2 = act[j].net2-1;
                 if(act[j].type==1)
                 {
                     if(n1!=-1)
@@ -356,6 +388,7 @@ main(int argc, char* argv[])
             if(pr[j].mtype==0)
             {
                 complex* valll = sub(temp[pr[j].net1],temp[pr[j].net2]);
+                fprintf(write_file1,"%s %d %d \n",pr[j].name,pr[j].net1,pr[j].net2);
                 complex* vallll = retzero();
                 if(pr[j].ltype==0)
                 {
@@ -376,12 +409,14 @@ main(int argc, char* argv[])
                 if(pr[j].ltype==1)
                 {
                     complex* valll = pr[j].val2;
+                   // valll = mult(valll,negone);
                     fprintf(res,"%s %lf %lf \n",pr[j].name,ab(valll),angle(valll));
                 }
                 else
                 {
                     int kkk = pr[j].active_count1 - 1;
                     complex* valll = temp[netcount+kkk+1];
+                    valll = mult(valll,negone);
                     fprintf(res,"%s %lf %lf \n",pr[j].name,ab(valll),angle(valll));
                 }
             }

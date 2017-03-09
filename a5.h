@@ -219,7 +219,7 @@ matrix *inverse(matrix *b)
 
         j=i;
 
-        while(ab(a->start[j][j])<(1e-14))
+        while(ab(a->start[j][i])<(1e-14))
         {
             j++;
         }
@@ -342,6 +342,27 @@ typedef struct
         double freq;
         int active_count;
     } active;
+/*active* copyelementdc(active* a)
+{
+    active* x = (active*)malloc(sizeof(active));
+    x->name = a->name;
+    x->net1 = a->net1;
+    x->net2 = a->net2;
+    x->offset = a->offset;
+    x->amplitude = a->offset;
+    x->frequency =a->frequency;
+    x->damping = a->damping;
+    x->n1 = a->n1;
+    x->n2 = a->n2;
+    x->total = a->total;
+    x->type = a->type;
+    complex* nn = retzero();
+    nn->c = extract_value(a->offset);
+    x->val = nn;
+    x->freq =0;
+    x->active_count = a->active_count+1;
+    return x;
+} */
 typedef struct
     {
         char* name;
@@ -575,8 +596,8 @@ void create_active(char* name,char* n1,char* n2,char* off,char* amp,char* freq,c
     delay1 = -2*pi*delay1;
     complex* n11 = retzero();
     double ampl = extract_value(amp);
-    n11->r = ampl*sin(delay1);
-    n11->c = ampl*cos(delay1);
+    n11->r = ampl*cos(delay1);
+    n11->c = ampl*sin(delay1);
     new1->active_count = voltcount;
     new1->freq = extract_value(freq);
     new1->val = n11;
@@ -589,6 +610,10 @@ void create_active(char* name,char* n1,char* n2,char* off,char* amp,char* freq,c
     act[activecount] = *new1;
     activecount++;
     totalcount++;
+   // active* nnn = copyelementdc(new1);
+   // act[activecount] = *nnn;
+   // activecount++;
+   // voltcount++;
     //printf("%s \n",new1->total);
     //fprintf(write_file1,"%s %d %d %s %s\n",new1->total,new1->net1,new1->net2,new1->n1,new1->n2);
 }
