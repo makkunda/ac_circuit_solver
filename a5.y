@@ -16,6 +16,10 @@
     int coun_net[10000];
     char* netp[10000];
 	int exzero;
+    void printcomplex(complex* xx,char* s)
+    {
+        fprintf(write_file1,"%s : %lf %lf \n",s,xx->r,xx->c);
+    }
 %}
 
 %union {
@@ -151,6 +155,11 @@ fflush(stdout);
     complex* one = construct(1,0);
     complex** final;
     complex** temp;
+    matrix* A;
+
+    qsort(act,activecount,(sizeof(act[0])),comparator);
+
+
     for(i=0;i<activecount;i++)
     {
         temp=(complex **)malloc(sizeof(complex*)*(netcount+voltcount));
@@ -161,7 +170,7 @@ fflush(stdout);
         double w = 2*pi*(act[i].freq);
         fprintf(res,"FREQUENCY %lfKHz \n",act[i].freq/1000);
         
-        matrix* A;
+        
         A = construct_matrix(netcount+voltcount-1,netcount+voltcount-1);
         for(j=0;j<passivecount;j++)
         {
@@ -184,33 +193,73 @@ fflush(stdout);
             A->start[n1][n1] = add(A->start[n1][n1],mult(negone,vall));
             A->start[n2][n2] = add(A->start[n2][n2],mult(negone,vall));
             A->start[n2][n1] = add(vall,A->start[n2][n1]);
+            // fprintf(write_file1,"reach1\n");
+            // printcomplex(A->start[n1][n1],"");
+            // printcomplex(A->start[n1][n2],"");
             }
             else if(n1!=-1)
             {
                 A->start[n1][n1] = add(A->start[n1][n1],mult(negone,vall));
+                
+                            // fprintf(write_file1,"reach2%d\n",n1);
+                            // printcomplex(A->start[n1][n1],"");
+
             }
             else
             {
                 A->start[n2][n2] = add(A->start[n2][n2],mult(negone,vall));
-            }
+                            // fprintf(write_file1,"reach3%d\n",n2);
+                            // printcomplex(A->start[n2][n2],"");
+
+             }
+             
         }
+        // int ii,jj;
+        // for(ii=0;ii<A->row;ii++)
+        // {
+        //     for(jj=0;jj<A->col;jj++)
+        //     {
+        //         fprintf(write_file1,"%.14lf,%.14lf ",(A->start[ii][jj])->r,(A->start[ii][jj])->c);
+        //     }
+        //     fprintf(write_file1,"\n");
+        // }
+
         for(j=0;j<activecount;j++)
         {
-            if(act[j].type==0 && j==i)
+            if(act[j].type==0)
             {
                 int n1 = act[j].net1-1;
                 int n2 = act[j].net2-1;
                 int kk = act[j].active_count-1;
                 if(n1!=-1){
-                A->start[n1][netcount+kk] = construct(1,0);
-                    A->start[netcount+kk][n1] = construct(1,0);}
+                    A->start[n1][netcount+kk] = construct(-1,0);
+                    A->start[netcount+kk][n1] = construct(-1,0);}
                 if(n2!=-1){
-                A->start[n2][netcount+kk] = construct(-1,0);
-                    A->start[netcount+kk][n2] = construct(-1,0);}
-            }
-            
+                    A->start[n2][netcount+kk] = construct(1,0);
+                    A->start[netcount+kk][n2] = construct(1,0);}
+
+            }   
         }
+        // int ii,jj;
+        // for(ii=0;ii<A->row;ii++)
+        // {
+        //     for(jj=0;jj<A->col;jj++)
+        //     {
+        //         fprintf(write_file1,"%.6lf,%.6lf ",A->start[ii][jj]->r,A->start[ii][jj]->c);
+        //     }
+        //     fprintf(write_file1,"\n");
+        // }
+
         matrix* Ainv = inverse(A);
+        // for(ii=0;ii<Ainv->row;ii++)
+        // {
+        //     for(jj=0;jj<Ainv->col;jj++)
+        //     {
+        //         fprintf(write_file1,"%.6lf,%.6lf ",Ainv->start[ii][jj]->r,Ainv->start[ii][jj]->c);
+        //     }
+        //     fprintf(write_file1,"\n");
+        // }
+
         complex** B;
         B=(complex **)malloc(sizeof(complex *)*(netcount+voltcount-1));
         for(j=0;j<(netcount+voltcount-1);j++)
